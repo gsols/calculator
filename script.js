@@ -53,24 +53,25 @@ function backspace() {
 }
 
 function chooseOperator(op) {
-  // commit current display into `a` or `b` depending on state
   const current = Number(state.display);
 
-  if (state.op === null) {
-    state.a = current;
-    state.op = op;
-    state.display = '0';
+  if (op === "%") {
+    state.a = operate("%", current, 100); 
+    state.display = formatNumber(state.a);
+    render();
     return;
   }
-
-  state.b = current;
-  const result = operate(state.op, state.a, state.b);
-
-  state.a = result;
-  state.b = null;
+  if (state.op === null) {
+    state.a = current; 
+  } else if (state.op !== null && state.b === null) {
+    state.b = current;
+    state.a = operate(state.op, state.a, state.b);
+    state.b = null;
+    state.display = formatNumber(state.a);
+  }
   state.op = op;
-
   render();
+  state.display = '0';
 }
 
 function evaluate() {
@@ -107,7 +108,7 @@ function operate(op, a, b) {
     case '-': return a - b;
     case '*': return a * b;
     case '/': return b === 0 ? NaN : a / b;
-    case '%': return (a / b) * 100; // keep your current meaning; many calculators do a%b instead
+    case '%': return (a / b); 
     default: throw new Error('Unknown operator: ' + op);
   }
 }
