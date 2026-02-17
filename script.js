@@ -3,14 +3,28 @@ const state = {
   display: '0',      // string for easy editing (leading 0, decimals, etc.)
   a: null,           // number
   b: null,           // number
-  op: null,          // '+', '-', '*', '/', '%'
+  op: null,          // '+', '-', '*', '/'
 };
 
 const displayEl = document.querySelector('.display');
 const buttons = document.querySelectorAll('button');
+const operatorButtons = document.querySelectorAll('button.operator');
 
 function render() {
   displayEl.textContent = state.display;
+  const currentOpEl = document.querySelector('.current-operation');
+
+  currentOpEl.textContent = state.op || "none";
+}
+
+function setActiveOperator(op) {
+  operatorButtons.forEach(btn => {
+    btn.classList.toggle('is-active', btn.dataset.value === op);
+  });
+}
+
+function clearActiveOperator() {
+  operatorButtons.forEach(btn => btn.classList.remove('is-active'));
 }
 
 function clearAll() {
@@ -18,6 +32,8 @@ function clearAll() {
   state.a = null;
   state.b = null;
   state.op = null;
+  state.hasInput = false;
+  clearActiveOperator();
   render();
 }
 
@@ -53,14 +69,8 @@ function backspace() {
 }
 
 function chooseOperator(op) {
+  
   const current = Number(state.display);
-
-  if (op === "%") {
-    state.a = operate("%", current, 100); 
-    state.display = formatNumber(state.a);
-    render();
-    return;
-  }
   if (state.op === null) {
     state.a = current; 
   } else if (state.op !== null && state.b === null) {
@@ -70,12 +80,16 @@ function chooseOperator(op) {
     state.display = formatNumber(state.a);
   }
   state.op = op;
+  setActiveOperator(op); // highlight selected operator
+
   render();
   state.display = '0';
+  state.hasInput = false;
 }
 
 function evaluate() {
   if (state.op === null) return;
+  if (state.hasInput === false) return;
 
   const current = Number(state.display);
   // If user hits "=" immediately after selecting an operator, treat it as a no-op
@@ -88,14 +102,12 @@ function evaluate() {
   state.a = result;
   state.b = null;
   state.op = null;
-  state.justEvaluated = true;
-
+  state.hasInput = false;
+  clearActiveOperator(); // remove highlight after "="
   render();
 }
 
 function formatNumber(n) {
-  if (!Number.isFinite(n)) return 'Error';
-  // avoid ugly floating outputs; tweak as desired
   const s = String(n);
   if (s.includes('e')) return s;
   const rounded = Math.round((n + Number.EPSILON) * 1e12) / 1e12;
@@ -109,8 +121,13 @@ function operate(op, a, b) {
     case '*': return a * b;
     case '/': return b === 0 ? NaN : a / b;
     case '%': return (a / b); 
-    default: throw new Error('Unknown operator: ' + op);
   }
+}
+
+function percentage() {
+  state.a = operate("%", state.display, 100);
+  state.display = formatNumber(state.a);
+  render();
 }
 
 function handleButton(value) {
@@ -121,13 +138,16 @@ function handleButton(value) {
   if (value === 'C') return clearAll();
   if (value === 'del') return backspace();
   if (value === '=') return evaluate();
+  if (value === '%') return percentage();
 
-  if (['+', '-', '*', '/', '%'].includes(value)) return chooseOperator(value);
+  if (['+', '-', '*', '/'].includes(value)) return chooseOperator(value);
 }
 
 buttons.forEach((btn) => {
   btn.addEventListener('click', () => handleButton(btn.dataset.value));
+
 });
 
 // init
 render();
+

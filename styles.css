@@ -60,7 +60,9 @@ button.operator {
     background-color: #FFAA33;
     color: rgb(0, 0, 0);
 }
-button.operator:hover {
+
+button.operator:hover,
+button.operator.is-active {
     background-color: #0f0f0f;
     color: white;
 }
